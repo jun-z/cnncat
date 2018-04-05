@@ -69,6 +69,8 @@ def train():
     # Logger.
     logger = helpers.get_logger('training')
 
+    helpers.log_args(logger, args)
+
     # Prepare training and testing data.
     MIN_LEN = max(eval(args.filter_mapping).keys())
 
