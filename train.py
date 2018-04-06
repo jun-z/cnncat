@@ -137,7 +137,7 @@ def train():
                                    device=args.device_id if args.cuda else -1)
 
     patience = args.patience
-    min_accuracy = 1.0
+    min_valid_loss = None
     for batch in iterator:
         optimizer.zero_grad()
         loss = criterion(classifier(batch.text), batch.label)
@@ -161,8 +161,11 @@ def train():
             logger.info(f'Average validation loss: {valid_loss:6.4f}')
             classifier.train()
 
-            if accuracy < min_accuracy + args.threshold:
-                min_accuracy = min(accuracy, min_accuracy)
+            if min_valid_loss is None:
+                min_valid_loss = valid_loss
+
+            if valid_loss < min_valid_loss + args.threshold:
+                min_valid_loss = min(valid_loss, min_valid_loss)
             else:
                 patience -= 1
                 if patience == 0:
