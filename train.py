@@ -168,7 +168,7 @@ def train():
             else:
                 patience -= 1
                 if patience == 0:
-                    logger.info(f'Patience of {patience} reached, decaying learning rate')
+                    logger.info(f'Patience of {args.patience} reached, decaying learning rate')
                     helpers.decay_learning_rate(optimizer, args.decay_factor)
                     patience = args.patience
 
