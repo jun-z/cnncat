@@ -154,8 +154,8 @@ def train():
 
             logger.info(f'Epoch {int(epoch):2} | '
                         f'progress: {progress:<6.2%} | '
-                        f'training loss: {loss.data[0]:6.4f} |'
-                        f'validation loss: {valid_loss:6.4f} |'
+                        f'training loss: {loss.data[0]:6.4f} | '
+                        f'validation loss: {valid_loss:6.4f} | '
                         f'validation accuracy: {accuracy:<6.2%} |')
 
             classifier.train()
