@@ -12,7 +12,7 @@ def get_logger(name, level=logging.INFO) -> logging.Logger:
 
     stdout_handler = logging.StreamHandler(sys.stdout)
 
-    formatter = logging.Formatter('[topicnet][%(name)s]'
+    formatter = logging.Formatter('[cnncat][%(name)s]'
                                   '[%(asctime)s][%(levelname)s]:%(message)s')
 
     stdout_handler.setLevel(logging.INFO)
