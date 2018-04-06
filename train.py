@@ -40,6 +40,15 @@ parser.add_argument(
     '--learning_rate', default=1e-3, type=float, help='learning rate')
 
 parser.add_argument(
+    '--threshold', default=1e-4, type=float, help='threshold for comparing loss')
+
+parser.add_argument(
+    '--patience', default=2, type=int, help='patience for learning rate decay')
+
+parser.add_argument(
+    '--decay_factor', default=.5, type=float, help='decay factor for learning rate')
+
+parser.add_argument(
     '--print_every', default=100, type=int, help='print every n iterations')
 
 parser.add_argument(
@@ -127,6 +136,8 @@ def train():
                                    sort_key=lambda x: len(x.text),
                                    device=args.device_id if args.cuda else -1)
 
+    patience = args.patience
+    min_accuracy = 1.0
     for batch in iterator:
         optimizer.zero_grad()
         loss = criterion(classifier(batch.text), batch.label)
@@ -149,6 +160,15 @@ def train():
             logger.info(f'Validation accuracy: {accuracy:<6.2%}')
             logger.info(f'Average validation loss: {valid_loss:6.4f}')
             classifier.train()
+
+            if accuracy < min_accuracy + args.threshold:
+                min_accuracy = min(accuracy, min_accuracy)
+            else:
+                patience -= 1
+                if patience == 0:
+                    logger.info(f'Patience of {patience} reached, decaying learning rate')
+                    helpers.decay_learning_rate(optimizer, args.decay_factor)
+                    patience = args.patience
 
         if epoch == args.num_epochs:
             break

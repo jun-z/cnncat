@@ -3,6 +3,7 @@ import random
 import logging
 
 import torch.nn as nn
+import torch.optim as optim
 from torchtext import data
 
 
@@ -87,3 +88,8 @@ def evaluate(dataset: data.Dataset,
         correct += preds.eq(batch.label.data).cpu().sum()
 
     return loss / len(dataset), correct / len(dataset)
+
+
+def decay_learning_rate(optimizer: optim.Optimizer, decay_factor: float):
+    for param_group in optimizer.param_groups():
+        param_group['lr'] = param_group['lr'] * decay_factor
