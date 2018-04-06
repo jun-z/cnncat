@@ -91,5 +91,5 @@ def evaluate(dataset: data.Dataset,
 
 
 def decay_learning_rate(optimizer: optim.Optimizer, decay_factor: float):
-    for param_group in optimizer.param_groups():
+    for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr'] * decay_factor
