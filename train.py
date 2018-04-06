@@ -164,6 +164,7 @@ def train():
                 min_valid_loss = valid_loss
 
             if valid_loss < min_valid_loss + args.threshold:
+                patience = args.patience
                 min_valid_loss = min(valid_loss, min_valid_loss)
             else:
                 patience -= 1
