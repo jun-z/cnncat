@@ -5,7 +5,7 @@ import torch.nn as nn
 class CNNClassifier(nn.Module):
     def __init__(self,
                  vocab_size,
-                 label_size,
+                 labelset_size,
                  embedding_dim,
                  filter_mapping,
                  pretrained_embeddings=None,
@@ -24,7 +24,7 @@ class CNNClassifier(nn.Module):
 
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout_prob)
-        self.linear = nn.Linear(sum(filter_mapping.values()), label_size)
+        self.linear = nn.Linear(sum(filter_mapping.values()), labelset_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence):
