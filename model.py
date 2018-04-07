@@ -1,5 +1,6 @@
-import torch
 import torch.nn as nn
+
+from modules import DenseBlock
 
 
 class CNNClassifier(nn.Module):
@@ -7,9 +8,12 @@ class CNNClassifier(nn.Module):
                  vocab_size,
                  labelset_size,
                  embedding_dim,
-                 filter_mapping,
-                 pretrained_embeddings=None,
-                 dropout_prob=.5):
+                 hidden_dim,
+                 num_layers,
+                 growth_rate,
+                 filter_size,
+                 dropout_prob=.5,
+                 pretrained_embeddings=None):
 
         super(CNNClassifier, self).__init__()
 
@@ -18,23 +22,26 @@ class CNNClassifier(nn.Module):
         if pretrained_embeddings is not None:
             self.embedding.weight.data.copy_(pretrained_embeddings)
 
-        self.convs = nn.ModuleList()
-        for filter_size, num_filters in filter_mapping.items():
-            self.convs.append(nn.Conv2d(1, num_filters, (filter_size, embedding_dim)))
+        self.dense_block = DenseBlock(embedding_dim,
+                                      num_layers,
+                                      growth_rate,
+                                      filter_size,
+                                      dropout_prob)
 
+        self.dense = nn.Linear(embedding_dim + num_layers * growth_rate, hidden_dim)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout_prob)
-        self.linear = nn.Linear(sum(filter_mapping.values()), labelset_size)
+        self.proj = nn.Linear(hidden_dim, labelset_size)
+
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence):
-        embeddings = self.embedding(sequence).unsqueeze(1)
+        embeddings = self.embedding(sequence)
+        embeddings = embeddings.transpose(1, 2).unsqueeze(2).contiguous()
 
-        feature_vecs = []
-        for conv in self.convs:
-            feature_maps = self.relu(conv(embeddings)).squeeze(-1)
-            feature_vec, _ = feature_maps.max(-1)
-            feature_vecs.append(feature_vec)
+        feature_maps = self.dense_block(embeddings)
+        feature_maps = feature_maps.squeeze(2).transpose(1, 2)
 
-        feature_vec = self.dropout(torch.cat(feature_vecs, 1))
-        return self.softmax(self.linear(feature_vec))
+        feature_vec = self.dense(feature_maps).transpose(1, 2).max(-1)[0]
+        feature_vec = self.relu(feature_vec)
+
+        return self.softmax(self.proj(feature_vec))

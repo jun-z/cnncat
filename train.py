@@ -58,7 +58,16 @@ parser.add_argument(
     '--pretrained_embeddings', type=str, help='pretrained embeddings')
 
 parser.add_argument(
-    '--filter_mapping', default='{1: 128, 2: 128}', help='mapping for filters')
+    '--hidden_dim', default=100, type=int, help='hidden dimension')
+
+parser.add_argument(
+    '--num_layers', default=5, type=int, help='number of layers')
+
+parser.add_argument(
+    '--growth_rate', default=32, type=int, help='growth rate')
+
+parser.add_argument(
+    '--filter_size', default=3, type=int, help='filter size')
 
 parser.add_argument(
     '--dropout_prob', default=.5, type=float, help='dropout probability')
@@ -81,14 +90,11 @@ def train():
     helpers.log_args(logger, args)
 
     # Prepare training and testing data.
-    MIN_LEN = max(eval(args.filter_mapping).keys())
-
     WORD = re.compile(args.token_regex)
 
     TEXT = data.Field(lower=True,
                       tokenize=WORD.findall,
-                      batch_first=True,
-                      preprocessing=lambda x: helpers.pad_shorties(x, MIN_LEN))
+                      batch_first=True)
 
     LABEL = data.Field(sequential=False)
 
@@ -119,11 +125,14 @@ def train():
 
     # Initiate criterion, classifier, and optimizer.
     classifier = CNNClassifier(vocab_size=len(TEXT.vocab),
-                               label_size=len(LABEL.vocab),
+                               labelset_size=len(LABEL.vocab),
                                embedding_dim=args.embedding_dim,
-                               filter_mapping=eval(args.filter_mapping),
-                               pretrained_embeddings=TEXT.vocab.vectors,
-                               dropout_prob=args.dropout_prob)
+                               hidden_dim=args.hidden_dim,
+                               num_layers=args.num_layers,
+                               growth_rate=args.growth_rate,
+                               filter_size=args.filter_size,
+                               dropout_prob=args.dropout_prob,
+                               pretrained_embeddings=TEXT.vocab.vectors)
 
     if args.cuda:
         classifier.cuda(device=args.device_id)

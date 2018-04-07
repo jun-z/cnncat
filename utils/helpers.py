@@ -29,13 +29,6 @@ def log_args(logger: logging.Logger, args):
         logger.info(f'--{k}:{v}')
 
 
-def pad_shorties(x, min_len, pad_token='<pad>'):
-    if len(x) < min_len:
-        return x + [pad_token] * (min_len - len(x))
-    else:
-        return x
-
-
 def split_data(dataset: data.TabularDataset,
                fields,
                random_seed=1123,
