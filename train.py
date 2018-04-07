@@ -40,7 +40,16 @@ parser.add_argument(
     '--learning_rate', default=1e-3, type=float, help='learning rate')
 
 parser.add_argument(
-    '--print_every', default=100, type=int, help='print every n iterations')
+    '--threshold', default=1e-4, type=float, help='threshold for comparing loss')
+
+parser.add_argument(
+    '--patience', default=3, type=int, help='patience for learning rate decay')
+
+parser.add_argument(
+    '--decay_factor', default=.5, type=float, help='decay factor for learning rate')
+
+parser.add_argument(
+    '--logging_interval', default=100, type=int, help='logging interval')
 
 parser.add_argument(
     '--embedding_dim', default=300, type=int, help='embedding dimension')
@@ -127,6 +136,8 @@ def train():
                                    sort_key=lambda x: len(x.text),
                                    device=args.device_id if args.cuda else -1)
 
+    patience = args.patience
+    min_valid_loss = None
     for batch in iterator:
         optimizer.zero_grad()
         loss = criterion(classifier(batch.text), batch.label)
@@ -135,20 +146,32 @@ def train():
 
         progress, epoch = math.modf(iterator.epoch)
 
-        if iterator.iterations % args.print_every == 0:
-            logger.info(f'Epoch {int(epoch):2} | '
-                        f'progress: {progress:<6.2%} | '
-                        f'loss: {loss.data[0]:6.4f}')
-
-        if progress == 0 and epoch > 0:
+        if iterator.iterations % args.logging_interval == 0:
             valid_loss, accuracy = helpers.evaluate(valid_set,
                                                     args.batch_size,
                                                     classifier,
                                                     args.device_id if args.cuda else -1)
 
-            logger.info(f'Validation accuracy: {accuracy:<6.2%}')
-            logger.info(f'Average validation loss: {valid_loss:6.4f}')
+            logger.info(f'Epoch {int(epoch):2} | '
+                        f'progress: {progress:<6.2%} | '
+                        f'training loss: {loss.data[0]:6.4f} | '
+                        f'validation loss: {valid_loss:6.4f} | '
+                        f'validation accuracy: {accuracy:<6.2%} |')
+
             classifier.train()
+
+            if min_valid_loss is None:
+                min_valid_loss = valid_loss
+
+            if valid_loss < min_valid_loss + args.threshold:
+                patience = args.patience
+                min_valid_loss = min(valid_loss, min_valid_loss)
+            else:
+                patience -= 1
+                if patience == 0:
+                    logger.info(f'Patience of {args.patience} reached, decaying learning rate')
+                    helpers.decay_learning_rate(optimizer, args.decay_factor)
+                    patience = args.patience
 
         if epoch == args.num_epochs:
             break

@@ -27,14 +27,14 @@ class CNNClassifier(nn.Module):
         self.linear = nn.Linear(sum(filter_mapping.values()), label_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, input_):
-        embeddings = self.embedding(input_).unsqueeze(1)
+    def forward(self, sequence):
+        embeddings = self.embedding(sequence).unsqueeze(1)
 
-        features = []
+        feature_vecs = []
         for conv in self.convs:
-            feature_map = self.relu(conv(embeddings)).squeeze(-1)
-            feature, _ = feature_map.max(-1)
-            features.append(feature)
+            feature_maps = self.relu(conv(embeddings)).squeeze(-1)
+            feature_vec, _ = feature_maps.max(-1)
+            feature_vecs.append(feature_vec)
 
-        features = self.dropout(torch.cat(features, 1))
-        return self.softmax(self.linear(features))
+        feature_vec = self.dropout(torch.cat(feature_vecs, 1))
+        return self.softmax(self.linear(feature_vec))
