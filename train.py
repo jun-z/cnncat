@@ -43,13 +43,13 @@ parser.add_argument(
     '--threshold', default=1e-4, type=float, help='threshold for comparing loss')
 
 parser.add_argument(
-    '--patience', default=3, type=int, help='patience for learning rate decay')
+    '--patience', default=5, type=int, help='patience for learning rate decay')
 
 parser.add_argument(
-    '--decay_factor', default=.5, type=float, help='decay factor for learning rate')
+    '--decay_factor', default=.8, type=float, help='decay factor for learning rate')
 
 parser.add_argument(
-    '--logging_interval', default=100, type=int, help='logging interval')
+    '--logging_interval', default=20, type=int, help='logging interval')
 
 parser.add_argument(
     '--embedding_dim', default=300, type=int, help='embedding dimension')
@@ -64,7 +64,7 @@ parser.add_argument(
     '--num_layers', default=5, type=int, help='number of layers')
 
 parser.add_argument(
-    '--growth_rate', default=32, type=int, help='growth rate')
+    '--growth_rate', default=20, type=int, help='growth rate')
 
 parser.add_argument(
     '--filter_size', default=3, type=int, help='filter size')
