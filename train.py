@@ -58,7 +58,10 @@ parser.add_argument(
     '--pretrained_embeddings', type=str, help='pretrained embeddings')
 
 parser.add_argument(
-    '--filter_mapping', default='{1: 128, 2: 128}', help='mapping for filters')
+    '--num_layers', default=1, type=int, help='number of layers')
+
+parser.add_argument(
+    '--filter_mapping', default='{1: 100, 3: 100, 5:100}', help='mapping for filters')
 
 parser.add_argument(
     '--dropout_prob', default=.5, type=float, help='dropout probability')
@@ -81,14 +84,11 @@ def train():
     helpers.log_args(logger, args)
 
     # Prepare training and testing data.
-    MIN_LEN = max(eval(args.filter_mapping).keys())
-
     WORD = re.compile(args.token_regex)
 
     TEXT = data.Field(lower=True,
                       tokenize=WORD.findall,
-                      batch_first=True,
-                      preprocessing=lambda x: helpers.pad_shorties(x, MIN_LEN))
+                      batch_first=True)
 
     LABEL = data.Field(sequential=False)
 
@@ -121,9 +121,10 @@ def train():
     classifier = CNNClassifier(vocab_size=len(TEXT.vocab),
                                label_size=len(LABEL.vocab),
                                embedding_dim=args.embedding_dim,
+                               num_layers=args.num_layers,
                                filter_mapping=eval(args.filter_mapping),
-                               pretrained_embeddings=TEXT.vocab.vectors,
-                               dropout_prob=args.dropout_prob)
+                               dropout_prob=args.dropout_prob,
+                               pretrained_embeddings=TEXT.vocab.vectors)
 
     if args.cuda:
         classifier.cuda(device=args.device_id)

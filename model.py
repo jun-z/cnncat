@@ -1,15 +1,18 @@
 import torch
 import torch.nn as nn
 
+from modules import ConvBlock
+
 
 class CNNClassifier(nn.Module):
     def __init__(self,
                  vocab_size,
                  label_size,
                  embedding_dim,
+                 num_layers,
                  filter_mapping,
-                 pretrained_embeddings=None,
-                 dropout_prob=.5):
+                 dropout_prob=.5,
+                 pretrained_embeddings=None):
 
         super(CNNClassifier, self).__init__()
 
@@ -18,23 +21,26 @@ class CNNClassifier(nn.Module):
         if pretrained_embeddings is not None:
             self.embedding.weight.data.copy_(pretrained_embeddings)
 
-        self.convs = nn.ModuleList()
-        for filter_size, num_filters in filter_mapping.items():
-            self.convs.append(nn.Conv2d(1, num_filters, (filter_size, embedding_dim)))
+        self.convs = nn.Sequential()
+        for i in range(num_layers):
+            if i == 0:
+                self.convs.add_module(f'conv-{i}',
+                                      ConvBlock(embedding_dim,
+                                                filter_mapping,
+                                                dropout_prob))
+            else:
+                self.convs.add_module(f'conv-{i}',
+                                      ConvBlock(sum(filter_mapping.values()),
+                                                filter_mapping,
+                                                dropout_prob))
 
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout_prob)
         self.linear = nn.Linear(sum(filter_mapping.values()), label_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence):
-        embeddings = self.embedding(sequence).unsqueeze(1)
+        embeddings = self.embedding(sequence)
 
-        feature_vecs = []
-        for conv in self.convs:
-            feature_maps = self.relu(conv(embeddings)).squeeze(-1)
-            feature_vec, _ = feature_maps.max(-1)
-            feature_vecs.append(feature_vec)
+        feature_maps = self.convs(embeddings)
+        feature_vec, _ = torch.max(feature_maps, 1)
 
-        feature_vec = self.dropout(torch.cat(feature_vecs, 1))
         return self.softmax(self.linear(feature_vec))
