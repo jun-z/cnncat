@@ -7,7 +7,7 @@ from modules import ConvBlock
 class CNNClassifier(nn.Module):
     def __init__(self,
                  vocab_size,
-                 label_size,
+                 labelset_size,
                  embedding_dim,
                  num_layers,
                  filter_mapping,
@@ -34,7 +34,7 @@ class CNNClassifier(nn.Module):
                                                 filter_mapping,
                                                 dropout_prob))
 
-        self.linear = nn.Linear(sum(filter_mapping.values()), label_size)
+        self.linear = nn.Linear(sum(filter_mapping.values()), labelset_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence):

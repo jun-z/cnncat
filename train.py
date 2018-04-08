@@ -119,7 +119,7 @@ def train():
 
     # Initiate criterion, classifier, and optimizer.
     classifier = CNNClassifier(vocab_size=len(TEXT.vocab),
-                               label_size=len(LABEL.vocab),
+                               labelset_size=len(LABEL.vocab),
                                embedding_dim=args.embedding_dim,
                                num_layers=args.num_layers,
                                filter_mapping=eval(args.filter_mapping),
