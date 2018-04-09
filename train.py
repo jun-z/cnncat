@@ -67,6 +67,9 @@ parser.add_argument(
     '--dropout_prob', default=.5, type=float, help='dropout probability')
 
 parser.add_argument(
+    '--beta', default=.2, type=float, help='beta for high confidence penalization')
+
+parser.add_argument(
     '--disable_cuda', action='store_true', help='disable cuda')
 
 parser.add_argument(
@@ -141,7 +144,12 @@ def train():
     min_valid_loss = None
     for batch in iterator:
         optimizer.zero_grad()
-        loss = criterion(classifier(batch.text), batch.label)
+
+        log_probs = classifier(batch.text)
+        loss = criterion(log_probs, batch.label)
+        if args.beta > 0:
+            loss = loss - args.beta * helpers.calc_entropy(log_probs)
+
         loss.backward()
         optimizer.step()
 
