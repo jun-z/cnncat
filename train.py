@@ -67,7 +67,7 @@ parser.add_argument(
     '--dropout_prob', default=.5, type=float, help='dropout probability')
 
 parser.add_argument(
-    '--beta', default=.2, type=float, help='beta for high confidence penalization')
+    '--beta', default=.0, type=float, help='beta for high confidence penalization')
 
 parser.add_argument(
     '--disable_cuda', action='store_true', help='disable cuda')
