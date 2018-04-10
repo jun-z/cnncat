@@ -2,6 +2,7 @@ import sys
 import random
 import logging
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchtext import data
@@ -59,6 +60,10 @@ def split_data(dataset: data.TabularDataset,
 
 def calc_loss(output, labels):
     return nn.functional.nll_loss(output, labels, size_average=False).data[0]
+
+
+def calc_entropy(log_probs):
+    return torch.mean(-torch.sum(torch.exp(log_probs) * log_probs, -1))
 
 
 def predict(output):

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from modules import ConvBlock
+from modules import Dense, ConvBlock
 
 
 class CNNClassifier(nn.Module):
@@ -21,6 +21,8 @@ class CNNClassifier(nn.Module):
         if pretrained_embeddings is not None:
             self.embedding.weight.data.copy_(pretrained_embeddings)
 
+        self.hidden_dim = sum(filter_mapping.values())
+
         self.convs = nn.Sequential()
         for i in range(num_layers):
             if i == 0:
@@ -30,11 +32,12 @@ class CNNClassifier(nn.Module):
                                                 dropout_prob))
             else:
                 self.convs.add_module(f'conv-{i}',
-                                      ConvBlock(sum(filter_mapping.values()),
+                                      ConvBlock(self.hidden_dim,
                                                 filter_mapping,
                                                 dropout_prob))
 
-        self.linear = nn.Linear(sum(filter_mapping.values()), labelset_size)
+        self.dense = Dense(self.hidden_dim)
+        self.linear = nn.Linear(self.hidden_dim, labelset_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence):
@@ -42,5 +45,6 @@ class CNNClassifier(nn.Module):
 
         feature_maps = self.convs(embeddings)
         feature_vec, _ = torch.max(feature_maps, 1)
+        feature_vec = self.dense(feature_vec)
 
         return self.softmax(self.linear(feature_vec))
