@@ -9,13 +9,17 @@ class Dense(nn.Module):
         super(Dense, self).__init__()
 
         self.layers = nn.Sequential(collections.OrderedDict([
+            ('norm', nn.BatchNorm2d(1)),
             ('linear-0', nn.Linear(input_dim, input_dim)),
             ('relu', nn.ReLU()),
             ('linear-1', nn.Linear(input_dim, input_dim))
         ]))
 
     def forward(self, sequence):
-        return sequence + self.layers(sequence)
+        sequence = sequence.unsqueeze(1).contiguous()
+        sequence = sequence + self.layers(sequence)
+
+        return sequence.squeeze(1)
 
 
 class ConvBlock(nn.Module):
@@ -25,6 +29,8 @@ class ConvBlock(nn.Module):
                  dropout_prob):
 
         super(ConvBlock, self).__init__()
+
+        self.norm = nn.BatchNorm2d(1)
 
         self.convs = nn.ModuleList()
         for filter_size, num_filters in filter_mapping.items():
@@ -42,6 +48,7 @@ class ConvBlock(nn.Module):
 
     def forward(self, sequence):
         sequence = sequence.unsqueeze(1)
+        sequence = self.norm(sequence)
 
         feature_maps = [conv(sequence).squeeze(-1) for conv in self.convs]
         feature_maps = torch.cat(feature_maps, 1).transpose(1, 2)
