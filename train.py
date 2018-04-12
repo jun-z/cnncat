@@ -1,4 +1,3 @@
-import re
 import math
 import argparse
 
@@ -87,10 +86,8 @@ def train():
     helpers.log_args(logger, args)
 
     # Prepare training and testing data.
-    WORD = re.compile(args.token_regex)
-
     TEXT = data.Field(lower=True,
-                      tokenize=WORD.findall,
+                      tokenize=helpers.tokenize,
                       batch_first=True)
 
     LABEL = data.Field(sequential=False)

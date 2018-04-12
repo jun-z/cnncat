@@ -6,6 +6,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchtext import data
+from spacy.lang.en import EnglishDefaults
+
+tokenizer = EnglishDefaults.create_tokenizer()
 
 
 def get_logger(name, level=logging.INFO) -> logging.Logger:
@@ -28,6 +31,10 @@ def get_logger(name, level=logging.INFO) -> logging.Logger:
 def log_args(logger: logging.Logger, args):
     for k, v in vars(args).items():
         logger.info(f'--{k}:{v}')
+
+
+def tokenize(text):
+    return [token.lower_ for token in tokenizer(text)]
 
 
 def pad_shorties(x, min_len, pad_token='<pad>'):
