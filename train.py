@@ -27,6 +27,9 @@ parser.add_argument(
     '--token_regex', default='\w+', help='tokenizing regex')
 
 parser.add_argument(
+    '--max_size', type=int, help='max size for vocab')
+
+parser.add_argument(
     '--min_freq', default=5, type=int, help='min frequency for vocab')
 
 parser.add_argument(
@@ -102,6 +105,7 @@ def train():
     logger.info(f'Loaded training data: {args.train_file}')
 
     TEXT.build_vocab(train_set,
+                     max_size=args.max_size,
                      min_freq=args.min_freq,
                      vectors=args.pretrained_embeddings)
 
