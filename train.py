@@ -1,4 +1,3 @@
-import re
 import math
 import argparse
 
@@ -19,6 +18,9 @@ parser.add_argument(
     '--train_file', required=True, help='training file path')
 
 parser.add_argument(
+    '--test_file', type=str, help='testing file path')
+
+parser.add_argument(
     '--valid_split', default=.2, type=float, help='split for validation set')
 
 parser.add_argument(
@@ -26,6 +28,9 @@ parser.add_argument(
 
 parser.add_argument(
     '--token_regex', default='\w+', help='tokenizing regex')
+
+parser.add_argument(
+    '--max_size', type=int, help='max size for vocab')
 
 parser.add_argument(
     '--min_freq', default=5, type=int, help='min frequency for vocab')
@@ -87,10 +92,8 @@ def train():
     helpers.log_args(logger, args)
 
     # Prepare training and testing data.
-    WORD = re.compile(args.token_regex)
-
     TEXT = data.Field(lower=True,
-                      tokenize=WORD.findall,
+                      tokenize=helpers.tokenize,
                       batch_first=True)
 
     LABEL = data.Field(sequential=False)
@@ -105,6 +108,7 @@ def train():
     logger.info(f'Loaded training data: {args.train_file}')
 
     TEXT.build_vocab(train_set,
+                     max_size=args.max_size,
                      min_freq=args.min_freq,
                      vectors=args.pretrained_embeddings)
 
@@ -184,6 +188,20 @@ def train():
 
         if epoch == args.num_epochs:
             break
+
+    # Optional testing after training is done.
+    if args.test_file is not None:
+        test_set = data.TabularDataset(args.test_file, 'csv', fields)
+
+        logger.info(f'Loaded testing data {args.test_file}')
+
+        test_loss, accuracy = helpers.evaluate(test_set,
+                                               args.batch_size,
+                                               classifier,
+                                               args.device_id if args.cuda else -1)
+
+        logger.info(f'Testing loss: {test_loss:6.4f}')
+        logger.info(f'Testing accuracy: {accuracy:<6.2%}')
 
 
 if __name__ == '__main__':

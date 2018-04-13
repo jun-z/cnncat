@@ -4,27 +4,12 @@ import torch
 import torch.nn as nn
 
 
-class Dense(nn.Module):
-    def __init__(self, input_dim):
-        super(Dense, self).__init__()
-
-        self.layers = nn.Sequential(collections.OrderedDict([
-            ('linear-0', nn.Linear(input_dim, input_dim)),
-            ('relu', nn.ReLU()),
-            ('linear-1', nn.Linear(input_dim, input_dim))
-        ]))
-
-    def forward(self, sequence):
-        return sequence + self.layers(sequence)
-
-
-class ConvBlock(nn.Module):
+class ConvLayer(nn.Module):
     def __init__(self,
                  input_dim,
-                 filter_mapping,
-                 dropout_prob):
+                 filter_mapping):
 
-        super(ConvBlock, self).__init__()
+        super(ConvLayer, self).__init__()
 
         self.convs = nn.ModuleList()
         for filter_size, num_filters in filter_mapping.items():
@@ -36,14 +21,30 @@ class ConvBlock(nn.Module):
                                         (filter_size, input_dim),
                                         padding=((filter_size - 1) // 2, 0)))
 
-        self.dense = Dense(sum(filter_mapping.values()))
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout_prob)
-
     def forward(self, sequence):
         sequence = sequence.unsqueeze(1)
 
         feature_maps = [conv(sequence).squeeze(-1) for conv in self.convs]
         feature_maps = torch.cat(feature_maps, 1).transpose(1, 2)
 
-        return self.dropout(self.relu(self.dense(feature_maps)))
+        return feature_maps
+
+
+class ConvBlock(nn.Module):
+    def __init__(self,
+                 filter_mapping):
+
+        super(ConvBlock, self).__init__()
+
+        self.input_dim = sum(filter_mapping.values())
+
+        self.layers = nn.Sequential(collections.OrderedDict([
+            ('conv-0', ConvLayer(self.input_dim, filter_mapping)),
+            ('relu-0', nn.ReLU()),
+            ('conv-1', ConvLayer(self.input_dim, filter_mapping))
+        ]))
+
+        self.relu = nn.ReLU()
+
+    def forward(self, sequence):
+        return self.relu(sequence + self.layers(sequence))
