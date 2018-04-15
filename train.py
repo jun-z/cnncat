@@ -66,7 +66,13 @@ parser.add_argument(
     '--num_layers', default=1, type=int, help='number of layers')
 
 parser.add_argument(
-    '--filter_mapping', default='{1: 100, 3: 100, 5:100}', help='mapping for filters')
+    '--num_groups', default=1, type=int, help='number of filter groups')
+
+parser.add_argument(
+    '--num_filters', default=300, type=int, help='number of filters per layer')
+
+parser.add_argument(
+    '--filter_size', default=3, type=int, help='filter size')
 
 parser.add_argument(
     '--dropout_prob', default=.5, type=float, help='dropout probability')
@@ -129,7 +135,9 @@ def train():
                                labelset_size=len(LABEL.vocab),
                                embedding_dim=args.embedding_dim,
                                num_layers=args.num_layers,
-                               filter_mapping=eval(args.filter_mapping),
+                               num_filters=args.num_filters,
+                               filter_size=args.filter_size,
+                               num_groups=args.num_groups,
                                dropout_prob=args.dropout_prob,
                                pretrained_embeddings=TEXT.vocab.vectors)
 

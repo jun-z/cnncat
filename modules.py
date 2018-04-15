@@ -1,48 +1,49 @@
-import collections
-
-import torch
 import torch.nn as nn
 
 
 class ConvLayer(nn.Module):
     def __init__(self,
                  input_dim,
-                 filter_mapping):
+                 input_channels,
+                 num_filters,
+                 filter_size,
+                 num_groups):
 
         super(ConvLayer, self).__init__()
 
-        self.convs = nn.ModuleList()
-        for filter_size, num_filters in filter_mapping.items():
-            if filter_size % 2 == 0:
-                raise ValueError('filter size cannot be even')
-
-            self.convs.append(nn.Conv2d(1,
-                                        num_filters,
-                                        (filter_size, input_dim),
-                                        padding=((filter_size - 1) // 2, 0)))
+        self.conv = nn.Conv2d(input_channels,
+                              num_filters,
+                              (filter_size, input_dim),
+                              padding=((filter_size - 1) // 2, 0),
+                              groups=num_groups)
 
     def forward(self, sequence):
-        sequence = sequence.unsqueeze(1)
-
-        feature_maps = [conv(sequence).squeeze(-1) for conv in self.convs]
-        feature_maps = torch.cat(feature_maps, 1).transpose(1, 2)
-
-        return feature_maps
+        return self.conv(sequence)
 
 
 class ConvBlock(nn.Module):
     def __init__(self,
-                 filter_mapping):
+                 num_filters,
+                 filter_size,
+                 num_groups):
 
         super(ConvBlock, self).__init__()
 
-        self.input_dim = sum(filter_mapping.values())
+        self.layers = nn.Sequential()
 
-        self.layers = nn.Sequential(collections.OrderedDict([
-            ('conv-0', ConvLayer(self.input_dim, filter_mapping)),
-            ('relu-0', nn.ReLU()),
-            ('conv-1', ConvLayer(self.input_dim, filter_mapping))
-        ]))
+        self.layers.add_module('conv-0', ConvLayer(1,
+                                                   num_filters,
+                                                   num_filters,
+                                                   filter_size,
+                                                   num_groups))
+
+        self.layers.add_module('relu-0', nn.ReLU())
+
+        self.layers.add_module('conv-1', ConvLayer(1,
+                                                   num_filters,
+                                                   num_filters,
+                                                   filter_size,
+                                                   num_groups))
 
         self.relu = nn.ReLU()
 
