@@ -17,8 +17,10 @@ class ConvLayer(nn.Module):
                               padding=((filter_size - 1) // 2, 0),
                               groups=num_groups)
 
+        self.norm = nn.BatchNorm2d(num_filters)
+
     def forward(self, sequence):
-        return self.conv(sequence)
+        return self.norm(self.conv(sequence))
 
 
 class ConvBlock(nn.Module):
