@@ -45,6 +45,9 @@ parser.add_argument(
     '--learning_rate', default=1e-3, type=float, help='learning rate')
 
 parser.add_argument(
+    '--max_norm', default=5., type=float, help='max norm for gradient clipping')
+
+parser.add_argument(
     '--threshold', default=1e-4, type=float, help='threshold for comparing loss')
 
 parser.add_argument(
@@ -163,6 +166,7 @@ def train():
             loss = loss - args.beta * helpers.calc_entropy(log_probs)
 
         loss.backward()
+        nn.utils.clip_grad_norm(classifier.parameters(), args.max_norm)
         optimizer.step()
 
         progress, epoch = math.modf(iterator.epoch)
