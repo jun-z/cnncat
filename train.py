@@ -63,7 +63,7 @@ parser.add_argument(
     '--pretrained_embeddings', type=str, help='pretrained embeddings')
 
 parser.add_argument(
-    '--num_layers', default=1, type=int, help='number of layers')
+    '--num_blocks', default=1, type=int, help='number of layers')
 
 parser.add_argument(
     '--num_groups', default=1, type=int, help='number of filter groups')
@@ -134,7 +134,7 @@ def train():
     classifier = CNNClassifier(vocab_size=len(TEXT.vocab),
                                labelset_size=len(LABEL.vocab),
                                embedding_dim=args.embedding_dim,
-                               num_layers=args.num_layers,
+                               num_blocks=args.num_blocks,
                                num_filters=args.num_filters,
                                filter_size=args.filter_size,
                                num_groups=args.num_groups,

@@ -9,7 +9,7 @@ class CNNClassifier(nn.Module):
                  vocab_size,
                  labelset_size,
                  embedding_dim,
-                 num_layers,
+                 num_blocks,
                  num_filters,
                  filter_size,
                  num_groups,
@@ -33,7 +33,7 @@ class CNNClassifier(nn.Module):
 
         self.layers.add_module('relu-0', nn.ReLU())
 
-        for i in range(num_layers):
+        for i in range(num_blocks):
             self.layers.add_module(f'conv-block-{i}',
                                    ConvBlock(num_filters,
                                              filter_size,
