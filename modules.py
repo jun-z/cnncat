@@ -1,6 +1,10 @@
 import torch.nn as nn
 
 
+def get_padding(filter_size):
+    return ((filter_size - 1) // 2, 0)
+
+
 class ConvLayer(nn.Module):
     def __init__(self,
                  input_dim,
@@ -14,7 +18,7 @@ class ConvLayer(nn.Module):
         self.conv = nn.Conv2d(input_channels,
                               num_filters,
                               (filter_size, input_dim),
-                              padding=((filter_size - 1) // 2, 0),
+                              padding=get_padding(filter_size),
                               groups=num_groups)
 
     def forward(self, sequence):
@@ -49,3 +53,17 @@ class ConvBlock(nn.Module):
 
     def forward(self, sequence):
         return self.relu(sequence + self.layers(sequence))
+
+
+class MaxPoolLayer(nn.Module):
+    def __init__(self,
+                 num_filters,
+                 filter_size):
+
+        super(MaxPoolLayer, self).__init__()
+
+        self.pool = nn.MaxPool2d((filter_size, 1),
+                                 padding=get_padding(filter_size))
+
+    def forward(self, sequence):
+        return self.pool(sequence)

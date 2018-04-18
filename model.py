@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from modules import ConvLayer, ConvBlock
+from modules import ConvLayer, ConvBlock, MaxPoolLayer
 
 
 class CNNClassifier(nn.Module):
@@ -33,11 +33,16 @@ class CNNClassifier(nn.Module):
 
         self.layers.add_module('relu-0', nn.ReLU())
 
+        self.layers.add_module('pool-0', MaxPoolLayer(num_filters, filter_size))
+
         for i in range(num_blocks):
             self.layers.add_module(f'conv-block-{i}',
                                    ConvBlock(num_filters,
                                              filter_size,
                                              num_groups))
+
+            self.layers.add_module(f'pool-{i+1}',
+                                   MaxPoolLayer(num_filters, filter_size))
 
         self.linear = nn.Linear(num_filters, labelset_size)
         self.dropout = nn.Dropout(dropout_prob)
