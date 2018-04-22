@@ -3,12 +3,12 @@ import argparse
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 
 from torchtext import data
 
 from utils import helpers
 from model import CNNClassifier
+from yellowfin.tuner import YFOptimizer
 
 
 # Command-line arguments.
@@ -40,18 +40,6 @@ parser.add_argument(
 
 parser.add_argument(
     '--batch_size', default=128, type=int, help='batch size')
-
-parser.add_argument(
-    '--learning_rate', default=1e-3, type=float, help='learning rate')
-
-parser.add_argument(
-    '--threshold', default=1e-4, type=float, help='threshold for comparing loss')
-
-parser.add_argument(
-    '--patience', default=3, type=int, help='patience for learning rate decay')
-
-parser.add_argument(
-    '--decay_factor', default=.5, type=float, help='decay factor for learning rate')
 
 parser.add_argument(
     '--logging_interval', default=100, type=int, help='logging interval')
@@ -145,15 +133,13 @@ def train():
         classifier.cuda(device=args.device_id)
 
     criterion = nn.NLLLoss()
-    optimizer = optim.Adam(classifier.parameters(), args.learning_rate)
+    optimizer = YFOptimizer(classifier.parameters())
 
     iterator = data.BucketIterator(dataset=train_set,
                                    batch_size=args.batch_size,
                                    sort_key=lambda x: len(x.text),
                                    device=args.device_id if args.cuda else -1)
 
-    patience = args.patience
-    min_valid_loss = None
     for batch in iterator:
         optimizer.zero_grad()
 
@@ -180,19 +166,6 @@ def train():
                         f'validation accuracy: {accuracy:<6.2%} |')
 
             classifier.train()
-
-            if min_valid_loss is None:
-                min_valid_loss = valid_loss
-
-            if valid_loss < min_valid_loss + args.threshold:
-                patience = args.patience
-                min_valid_loss = min(valid_loss, min_valid_loss)
-            else:
-                patience -= 1
-                if patience == 0:
-                    logger.info(f'Patience of {args.patience} reached, decaying learning rate')
-                    helpers.decay_learning_rate(optimizer, args.decay_factor)
-                    patience = args.patience
 
         if epoch == args.num_epochs:
             break
